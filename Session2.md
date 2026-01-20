@@ -40,11 +40,19 @@ This is a *mission critical system* because the data are collected by the compan
 
 The Wilderness Weather Station (WWS) is part of a national weather information system. The system collects climate data from remote areas to support climate-change monitoring and weather forecasting. Its failure primarily affects the mission of long-term data collection and forecast accuracy.
 
-### Mission impact
-
-If stations fail, the company continuous climate records and reduce the accuracy of forecasts in remote regions.
+- Mission impact
+  * If stations fail, the company continuous climate records and reduce the accuracy of forecasts in remote regions.
+  * This has an impact on scientific goals and data issues
+- Not primarily safety
+  * The station does not directly control life-sustaining equipment or immediate safety functions (unlike, say, an insulin pump or aircraft flight control).
+  * Poorer forecasts can contribute to risk, but there are many other data sources and systems; a single station’s failure rarely causes immediate catastrophic harm.
+- Not primarily business critical:
+  * The system is government-operated for public and scientific purposes, not as the core revenue engine of a single company.
+  * Economic consequences (e.g. less accurate forecasts for agriculture or transport) are real but indirect and distributed.
 
 ### Architecture
+
+Based on the requirements for *reliability* and *availability*, core of the second session, the goal is to have a redundant system organization and control on the system. For this reason, there are redundant sensors, energy sources and transmission devices.
 
 ```mermaid
 flowchart TD
