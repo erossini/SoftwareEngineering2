@@ -2,11 +2,11 @@
 flowchart TD
 
     %% =========================
-    %% SENSORS LAYER
+    %% SENSORS
     %% =========================
-    subgraph SENSORS["Sensors Layer (Redundant + Diverse)"]
-        T1["Temp Sensor A"]
-        T2["Temp Sensor B (Redundant)"]
+    subgraph Sensors
+        T1["Temperature Sensor A"]
+        T2["Temperature Sensor B (Redundant)"]
         P1["Pressure Sensor A"]
         P2["Pressure Sensor B (Redundant)"]
         W1["Wind Sensor A (Ultrasonic)"]
@@ -18,120 +18,116 @@ flowchart TD
     %% =========================
     %% SENSOR CONTROLLERS
     %% =========================
-    subgraph CONTROLLERS["Sensor Controller Layer"]
-        C_A["Controller A (Primary MCU)"]
-        C_B["Controller B (Backup MCU - Diverse Chipset)"]
+    subgraph Controllers
+        CA["Controller A (Primary MCU)"]
+        CB["Controller B (Backup MCU)"]
         WD["Watchdog Monitor"]
     end
 
     %% =========================
-    %% STATION CONTROL + DATA MGMT
+    %% MAIN CONTROL
     %% =========================
-    subgraph CONTROL["Station Control & Data Management"]
-        MAIN_CPU["Main Station Computer"]
-        AGG["Data Aggregation Service"]
+    subgraph StationControl["Station Control & Data Management"]
+        CPU["Main Station Computer"]
+        AGG["Data Aggregation"]
         STORE1["Flash Storage A"]
         STORE2["Flash Storage B (Mirrored)"]
-        HEALTH["Health Monitoring Service"]
+        HEALTH["Health Monitoring"]
     end
 
     %% =========================
     %% PROTECTION SYSTEM
     %% =========================
-    subgraph PROTECT["Protection Controller (Diverse, Minimal Safety Logic)"]
+    subgraph Protection["Protection Controller"]
         PCU["Protection MCU"]
-        SAFE_SHUT["Safe Shutdown Logic"]
-        BAT_MON["Battery & Temp Monitor"]
+        SAFE["Safe Shutdown Logic"]
+        BAT["Battery & Temp Monitor"]
     end
 
     %% =========================
-    %% COMMUNICATION SUBSYSTEM
+    %% COMMUNICATION
     %% =========================
-    subgraph COMMS["Communication Subsystem"]
+    subgraph Comms["Communication Subsystem"]
         SAT1["Satellite Modem A"]
         SAT2["Satellite Modem B (Redundant)"]
         ANT["Satellite Antenna"]
     end
 
     %% =========================
-    %% POWER SUBSYSTEM
+    %% POWER SYSTEM
     %% =========================
-    subgraph POWER["Power Subsystem"]
+    subgraph Power["Power Subsystem"]
         SOLAR["Solar Panels"]
         WIND["Wind Turbine"]
         BATT1["Battery Bank A"]
-        BATT2["Battery Bank B (Redundant/Diverse)"]
+        BATT2["Battery Bank B"]
         PCTRL["Power Controller"]
     end
 
     %% =========================
-    %% MAINTENANCE & UPDATE
+    %% MAINTENANCE
     %% =========================
-    subgraph MAINT["Maintenance & Reconfiguration"]
-        FW_ACTIVE["Active Firmware Image"]
-        FW_BACKUP["Backup Firmware Image"]
-        BOOT["Bootloader (Diverse Implementation)"]
+    subgraph Maintenance["Maintenance & Updates"]
+        FW1["Active Firmware"]
+        FW2["Backup Firmware"]
+        BOOT["Bootloader"]
         REMOTE["Remote Update Interface"]
     end
 
-    %% =========================
-    %% CONNECTIONS
-    %% =========================
+    %% Connections: Sensors → Controllers
+    T1 --> CA
+    T2 --> CA
+    P1 --> CA
+    P2 --> CA
+    W1 --> CA
+    W2 --> CA
+    R1 --> CA
+    S1 --> CA
 
-    %% Sensors -> Controllers
-    T1 --> C_A
-    T2 --> C_A
-    P1 --> C_A
-    P2 --> C_A
-    W1 --> C_A
-    W2 --> C_A
-    R1 --> C_A
-    S1 --> C_A
+    T1 --> CB
+    T2 --> CB
+    P1 --> CB
+    P2 --> CB
+    W1 --> CB
+    W2 --> CB
+    R1 --> CB
+    S1 --> CB
 
-    T1 --> C_B
-    T2 --> C_B
-    P1 --> C_B
-    P2 --> C_B
-    W1 --> C_B
-    W2 --> C_B
-    R1 --> C_B
-    S1 --> C_B
+    CA <-- WD --> CB
 
-    C_A <-- WD --> C_B
-
-    %% Controllers -> Main CPU
-    C_A --> MAIN_CPU
-    C_B --> MAIN_CPU
+    %% Controllers → Main CPU
+    CA --> CPU
+    CB --> CPU
 
     %% Main CPU internal flows
-    MAIN_CPU --> AGG
-    MAIN_CPU --> HEALTH
+    CPU --> AGG
     AGG --> STORE1
     AGG --> STORE2
+    CPU --> HEALTH
 
     %% Protection system
     HEALTH --> PCU
-    PCU --> SAFE_SHUT
-    PCU --> BAT_MON
+    PCU --> SAFE
+    PCU --> BAT
 
     %% Power subsystem
     SOLAR --> PCTRL
     WIND --> PCTRL
     PCTRL --> BATT1
     PCTRL --> BATT2
-    PCTRL --> MAIN_CPU
+    PCTRL --> CPU
     PCTRL --> PCU
 
     %% Communication subsystem
-    MAIN_CPU --> SAT1
-    MAIN_CPU --> SAT2
+    CPU --> SAT1
+    CPU --> SAT2
     SAT1 --> ANT
     SAT2 --> ANT
 
     %% Maintenance subsystem
-    REMOTE --> MAIN_CPU
-    MAIN_CPU --> FW_ACTIVE
-    MAIN_CPU --> FW_BACKUP
-    BOOT --> FW_ACTIVE
-    BOOT --> FW_BACKUP
+    REMOTE --> CPU
+    CPU --> FW1
+    CPU --> FW2
+    BOOT --> FW1
+    BOOT --> FW2
 ```
