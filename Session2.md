@@ -188,3 +188,142 @@ flowchart TD
     BOOT --> FW2
 
 ```
+
+---
+
+## Patient Information System for Mental Health Care (Mentcare)
+
+### Non-functional requirements
+
+- Patient record access (view/view summary/history)
+- Patient record update (create/edit consultations, treatments, legal status)
+- Patient monitoring and alerts (missed appointments, sectioned-patient checks, legal deadlines)
+- Administrative reporting (monthly management reports)
+- Offline access and synchronisation (local copies, sync with central database)
+
+### Metrics
+
+| Service                    | Non-functional reliability requirement                                                                  | Metric | Justification                                                                           | Suggested value                                             |
+|----------------------------|---------------------------------------------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| Patient record access      | The system shall be available for clinicians to access patient records during clinic hours.             | AVAIL  | Continuous service expectation during working hours; availability is critical for care. | AVAIL ≥ 99.9% during scheduled clinic hours                 |
+| Patient record update      | Record creation and updates shall complete without data loss or corruption.                             | POFOD  | Each save/update is a discrete demand; we care about failure per operation.             | POFOD ≤ 10^{-4} per update                                  |
+| Clinical monitoring/alerts | The system shall generate correct alerts with very low probability of missed or false-critical alerts.  | POFOD  | Alerts are event-based demands; safety-related but not as immediate as an insulin pump. | POFOD (missed critical alert) ≤ 10^{-5} per monitored event |
+| Offline access and sync    | When offline, local access shall succeed; when reconnecting, sync shall complete without inconsistency. | POFOD  | Sync is an intermittent, high-risk operation.                                           | POFOD ≤ 10^{-3} per sync                                    |
+| Administrative reporting   | Scheduled reports shall be generated successfully within the agreed time window.                        | ROCOF  | Regular batch jobs; failures per reporting period is meaningful.                        | ROCOF ≤ 0.01 failures per reporting cycle                   |
+
+### Redundancy and diversity
+
+Where reliability really matters
+
+- The system is safety critical: wrong or missing information can lead to unsafe treatment, missed checks for sectioned patients, or failure to identify suicidal/dangerous patients.
+- It is also legally critical: records must support judicial review and compliance with mental health law and data protection law.
+
+So we want redundancy and diversity especially around:
+
+- Patient data storage
+- Access paths (online/offline)
+- Monitoring and alerting logic
+
+
+#### Hardware redundancy
+#### Software redundancy
+#### Diversity
+
+- Implementation diversity:
+   * Monitoring/alerting logic implemented as a separate service, possibly using a different technology stack or at least a different codebase from the main CRUD application. This reduces the chance that a single software defect breaks both record management and alerting.
+- Data replication diversity:
+   * Central database plus read-only replicas in different locations (e.g. different data centre/region) to reduce common-mode infrastructure failures.
+- Client diversity:
+   * Web client + thick client (or mobile client) so that a failure in one UI technology does not completely block access.
+
+
+### Architecture
+
+```mermaid
+flowchart TD
+
+    %% =========================
+    %% CLIENT LAYER
+    %% =========================
+    subgraph Clients["Client Layer (Clinics, Laptops, Community Centres)"]
+        WEB["Web Client"]
+        DESKTOP["Desktop Client (Offline Capable)"]
+        CACHE["Local Patient Cache (Offline Copy)"]
+    end
+
+    DESKTOP --> CACHE
+
+    %% =========================
+    %% APPLICATION SERVERS
+    %% =========================
+    subgraph AppTier["Application Tier (Redundant Servers)"]
+        APP1["App Server A"]
+        APP2["App Server B (Redundant)"]
+        LB["Load Balancer"]
+    end
+
+    WEB --> LB
+    DESKTOP --> LB
+    LB --> APP1
+    LB --> APP2
+
+    %% =========================
+    %% MONITORING & ALERTS
+    %% =========================
+    subgraph Monitoring["Monitoring & Alerts (Diverse Service)"]
+        MON1["Monitoring Service A"]
+        MON2["Monitoring Service B (Redundant/Diverse Implementation)"]
+    end
+
+    APP1 --> MON1
+    APP2 --> MON2
+
+    %% =========================
+    %% DATABASE LAYER
+    %% =========================
+    subgraph DB["Database Layer (Redundant + Replicated)"]
+        DBP["Primary Patient Database"]
+        DBR1["Replica Database 1"]
+        DBR2["Replica Database 2 (Different Region - Diversity)"]
+    end
+
+    APP1 --> DBP
+    APP2 --> DBP
+    DBP --> DBR1
+    DBP --> DBR2
+
+    %% =========================
+    %% SYNC SERVICE
+    %% =========================
+    subgraph Sync["Offline Sync Service"]
+        SYNC["Sync Engine"]
+    end
+
+    CACHE --> SYNC
+    SYNC --> APP1
+    SYNC --> APP2
+
+    %% =========================
+    %% REPORTING
+    %% =========================
+    subgraph Reporting["Reporting Service (Batch Jobs)"]
+        REP1["Reporting Engine"]
+    end
+
+    APP1 --> REP1
+    APP2 --> REP1
+    REP1 --> DBR1
+
+    %% =========================
+    %% SECURITY & AUDIT
+    %% =========================
+    subgraph Security["Security & Audit"]
+        AUTH["Authentication Service"]
+        AUDIT["Audit Log Store (Append‑Only)"]
+    end
+
+    WEB --> AUTH
+    DESKTOP --> AUTH
+    APP1 --> AUDIT
+    APP2 --> AUDIT
+```
