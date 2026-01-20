@@ -12,7 +12,7 @@
 
 ## Wilderness Weather Station (WWS)
 
-This is a mission critical system because the data are collected by the company and provides this data to others but it is not involved in activities that can compromise the business nor working on personal data.
+This is a *mission critical system* because the data are collected by the company and provides this data to others but it is not involved in activities that can compromise the business nor working on personal data.
 
 ### Non-functional requirements
 
